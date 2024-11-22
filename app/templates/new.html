@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>New Assessment</h1>
+
+<form action="" method="post" name="create_new">
+    {{ form.hidden_tag() }}
+    <p>Module Code</p>
+    {{ form.module_code }}
+    {% for error in form.module_code.errors %}
+    <div class="alert alert-danger" role="alert">
+        [{{ error }}]
+    </div>
+    {% endfor %}
+    <p>Assessment title</p>
+    {{ form.assessment_title }}
+    {% for error in form.assessment_title.errors %}
+    <div class="alert alert-danger" role="alert">
+        [{{ error }}]
+    </div>
+    {% endfor %}
+    <p>Description</p>
+    {{ form.description }}
+    {% for error in form.description.errors %}
+    <div class="alert alert-danger" role="alert">
+        [{{ error }}]
+    </div>
+    {% endfor %}
+    <p>Due Date</p>
+    {{ form.due_date(type="datetime-local") }}
+    {% for error in form.due_date.errors %}
+    <div class="alert alert-danger" role="alert">
+        [{{ error }}]
+    </div>
+    {% endfor %}
+
+
+    <p><input type="submit" value="create_new"></p>
+</form>
+
+{% endblock %}
