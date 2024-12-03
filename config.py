@@ -1,11 +1,7 @@
 import os
-
-
 basedir = os.path.abspath(os.path.dirname(__file__))
-SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
-SQLALCHEMY_TRACK_MODIFICATIONS = True
-WTF_CSRF_ENABLED = True
-SECRET_KEY = 'cLW1W2_KZiLreQseCYyXx_sSLE3NQQNSAejzPpjxH7w'
-SECURITY_PASSWORD_SALT = '243605343346578201545786450520369814860'
-REMEMBER_COOKIE_SAMESITE = True
-REMEMBER_COOKIE_SAMESITE = True
+
+
+class Config:
+    SECRET_KEY = 'asdgdsfhsdfgsdfgsdfg'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
