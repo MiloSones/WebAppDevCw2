@@ -2,4 +2,7 @@
 
 {% block content %}
     <h1>Store</h1>
+    {% for product in products %}
+    <p>{{ product.title }}</p>
+    {% endfor %}
 {% endblock %}

@@ -4,7 +4,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 import sqlalchemy as sa
 from app import app, db
 from app.forms import LoginForm, RegistrationForm
-from app.models import User
+from app.models import User, Product
 
 
 @app.route('/')
@@ -15,7 +15,8 @@ def index():
 
 @app.route('/store')
 def store():
-    return render_template('store.html', title='Store')
+    products = db.session.scalars(sa.select(Product)).all()
+    return render_template('store.html', title='Store', products=products)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
