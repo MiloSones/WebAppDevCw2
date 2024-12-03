@@ -1,5 +1,5 @@
 from urllib.parse import urlsplit
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, jsonify, request
 from flask_login import login_user, logout_user, current_user, login_required
 import sqlalchemy as sa
 from app import app, db
@@ -56,3 +56,20 @@ def register():
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
+
+@app.route('/add-to-basket', methods=['POST'])
+def add_to_basket():
+    try:
+        # Get the JSON data from the request
+        data = request.get_json()
+
+        # Extract item ID from the received data
+        item_id = data.get('id')
+        
+        if not item_id:
+            return jsonify({'message': 'Item ID is missing!'}), 400
+        
+
+        return jsonify({'message': 'Item added to basket!'}), 200
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500

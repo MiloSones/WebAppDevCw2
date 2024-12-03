@@ -1,4 +1,4 @@
-import requests
+
 from datetime import datetime, timezone
 from typing import Optional
 import sqlalchemy as sa
@@ -41,35 +41,35 @@ class Product(db.Model):
     def __repr__(self):
         return f"<Product {self.title} (${self.price})>"
 
-def populate_products():
-    api_url = "https://fakestoreapi.com/products"
-    try:
-        # Fetch data from the API
-        response = requests.get(api_url)
-        response.raise_for_status()
-        products = response.json()
+# def populate_products():
+#     api_url = "https://fakestoreapi.com/products"
+#     try:
+#         # Fetch data from the API
+#         response = requests.get(api_url)
+#         response.raise_for_status()
+#         products = response.json()
 
-        # Iterate over the fetched products and add them to the database
-        for product in products:
-            db_product = Product(
-                id=product["id"],
-                title=product["title"],
-                price=product["price"],
-                description=product["description"],
-                category=product["category"],
-                image=product["image"],
-                rating_rate=product["rating"]["rate"],
-                rating_count=product["rating"]["count"]
-            )
-            db.session.merge(db_product)  # Use merge to handle upserts
+#         # Iterate over the fetched products and add them to the database
+#         for product in products:
+#             db_product = Product(
+#                 id=product["id"],
+#                 title=product["title"],
+#                 price=product["price"],
+#                 description=product["description"],
+#                 category=product["category"],
+#                 image=product["image"],
+#                 rating_rate=product["rating"]["rate"],
+#                 rating_count=product["rating"]["count"]
+#             )
+#             db.session.merge(db_product)  # Use merge to handle upserts
 
-        # Commit the changes
-        db.session.commit()
-        print("Database populated with products successfully.")
-    except requests.RequestException as e:
-        print(f"Error fetching data from API: {e}")
-    except Exception as e:
-        print(f"Error populating database: {e}")
+#         # Commit the changes
+#         db.session.commit()
+#         print("Database populated with products successfully.")
+#     except requests.RequestException as e:
+#         print(f"Error fetching data from API: {e}")
+#     except Exception as e:
+#         print(f"Error populating database: {e}")
 
 # class Property(db.Model):
 #     id = db.Column(db.Integer, primary_key=True)
