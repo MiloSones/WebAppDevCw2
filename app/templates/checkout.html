@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="text-center">Checkout</h1>
+    <p class="text-center">Total Price: <strong>${{ total_price }}</strong></p>
+    <div class="text-center">
+        <button id="checkout-button" class="btn btn-primary">Proceed to Payment</button>
+    </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripe = Stripe('pk_test_51QS74ZFYg0cFbH8aFQyL5XpWeVNz8oSwJ3P0qYtrvFzL6fqCd2MvlS6S6NvjaaCqRhhyftx6kWJpQeYTr0OfmXde003pftoHD9');
+
+    document.getElementById('checkout-button').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/checkout', { method: 'POST' });
+            const { id } = await response.json();
+            if (id) {
+                stripe.redirectToCheckout({ sessionId: id });
+            }
+        } catch (error) {
+            console.error('Error during checkout:', error);
+            alert('Failed to initiate checkout. Please try again.');
+        }
+    });
+</script>
+{% endblock %}

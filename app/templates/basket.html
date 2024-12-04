@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="text-center">Your Basket</h1>
+    <div class="row">
+        <div class="col-md-8">
+            {% if basket_items %}
+            <ul class="list-group">
+                {% for item in basket_items %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5>{{ item.title }}</h5>
+                        <p>Category: {{ item.category }}</p>
+                        <p>Price: ${{ item.price }}</p>
+                        <p>
+                            <strong>Stock Available:</strong> {{ item.stock }}
+                        </p>
+                        <label for="quantity-{{ item.id }}">Quantity:</label>
+                        <input type="number" name="quantity" id="quantity-{{ item.id }}" value="{{ item.quantity }}" min="1" max="{{ item.stock }}" class="form-control d-inline w-auto basket-quantity" data-item-id="{{ item.id }}" data-stock="{{ item.stock }}">
+                        <div class="text-danger mt-2" id="stock-warning-{{ item.id }}" style="display: none;">
+                            Not enough stock available!
+                        </div>
+                    </div>
+                    <button class="btn btn-danger remove-item" data-id="{{ item.id }}">Remove</button>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-center">Your basket is empty. <a href="{{ url_for('index') }}">Continue shopping</a>.</p>
+            {% endif %}
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Summary</h4>
+                    <p>Total Items: {{ total_items }}</p>
+                    <p>Total Price: ${{ total_price }}</p>
+                    <form action="{{ url_for('checkout') }}" method="POST">
+                        <button type="submit" class="btn btn-success w-100" id="checkout-button" disabled>Checkout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const quantityInputs = document.querySelectorAll('.basket-quantity');
+        const checkoutButton = document.getElementById('checkout-button');
+
+        // Function to check for stock issues across all inputs
+        const validateStock = () => {
+            let hasStockIssues = false;
+
+            quantityInputs.forEach(input => {
+                const stock = parseInt(input.getAttribute('data-stock'), 10);
+                const quantity = parseInt(input.value, 10);
+                const warning = document.getElementById(`stock-warning-${input.getAttribute('data-item-id')}`);
+
+                if (quantity > stock) {
+                    warning.style.display = 'block';
+                    hasStockIssues = true;
+                } else {
+                    warning.style.display = 'none';
+                }
+            });
+
+            // Disable checkout button if any stock issues exist
+            checkoutButton.disabled = hasStockIssues;
+        };
+
+        // Function to update the basket on the server
+        const updateBasket = (itemId, newQuantity) => {
+            return fetch('/update-basket-quantity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ item_id: itemId, quantity: newQuantity })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.success) {
+                    alert('Failed to update the basket.');
+                }
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+                alert('Failed to update the basket.');
+            });
+        };
+
+        // Attach event listeners to quantity inputs
+        quantityInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                const itemId = input.getAttribute('data-item-id');
+                const newQuantity = parseInt(input.value, 10);
+
+                // Validate stock
+                validateStock();
+
+                // Update basket if the stock is valid
+                const stock = parseInt(input.getAttribute('data-stock'), 10);
+                if (newQuantity <= stock) {
+                    updateBasket(itemId, newQuantity).then(() => {
+                        // Reload the page to reflect updated totals
+                        location.reload();
+                    });
+                }
+            });
+        });
+
+        // Initial validation on page load
+        validateStock();
+
+        const removeButtons = document.querySelectorAll('.remove-item');
+
+        removeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const itemId = button.getAttribute('data-id');
+
+                fetch('/remove-from-basket', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id: itemId })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to remove item.');
+                    }
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    alert('Failed to remove item.');
+                });
+            });
+        });
+    });
+</script>
+
+
+{% endblock %}

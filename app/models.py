@@ -1,4 +1,4 @@
-
+import random
 from datetime import datetime, timezone
 from typing import Optional
 import sqlalchemy as sa
@@ -37,10 +37,25 @@ class Product(db.Model):
     image: so.Mapped[str] = so.mapped_column(sa.String(512), nullable=True)
     rating_rate: so.Mapped[float] = so.mapped_column(sa.Float, nullable=True)
     rating_count: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True)
+    stock: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, default=0)
 
     def __repr__(self):
         return f"<Product {self.title} (${self.price})>"
 
+
+class Basket(db.Model):
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    user_id: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False)
+    product_id: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False)
+    quantity: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False)
+
+
+def set_fake_stock():
+    products = db.session.scalars(sa.select(Product)).all()
+    for product in products:
+        if product.stock is 0:
+            product.stock = random.randint(1, 100)  # Set a random stock between 1 and 100
+    db.session.commit()
 # def populate_products():
 #     api_url = "https://fakestoreapi.com/products"
 #     try:

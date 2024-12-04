@@ -3,14 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     buttons.forEach(button => {
         button.addEventListener('click', () => {
-            const itemId = button.getAttribute('product-id');
+            const productId = button.getAttribute('product-id');
 
             fetch('/add-to-basket', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ id: itemId })
+                body: JSON.stringify({ id: productId })
             })
             .then(response => {
                 if (!response.ok) {
