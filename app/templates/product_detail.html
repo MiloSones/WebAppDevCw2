@@ -10,7 +10,7 @@
             <h1>{{ product.title }}</h1>
             <h4 class="text-muted">Category: {{ product.category }}</h4>
             <p>{{ product.description }}</p>
-            <p><strong>Price:</strong> ${{ product.price }}</p>
+            <p><strong>Price:</strong> £{{ product.price }}</p>
             <p><strong>Stock Available:</strong> {{ product.stock }}</p>
             <form method="POST" action="{{ url_for('add_to_basket') }}">
                 <input type="hidden" name="id" value="{{ product.id }}">

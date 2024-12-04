@@ -1,4 +1,5 @@
 import random
+import requests
 from datetime import datetime, timezone
 from typing import Optional
 import sqlalchemy as sa
@@ -54,41 +55,28 @@ def set_fake_stock():
     products = db.session.scalars(sa.select(Product)).all()
     for product in products:
         if product.stock is 0:
-            product.stock = random.randint(1, 100)  # Set a random stock between 1 and 100
+            product.stock = random.randint(1, 100)
     db.session.commit()
-# def populate_products():
-#     api_url = "https://fakestoreapi.com/products"
-#     try:
-#         # Fetch data from the API
-#         response = requests.get(api_url)
-#         response.raise_for_status()
-#         products = response.json()
 
-#         # Iterate over the fetched products and add them to the database
-#         for product in products:
-#             db_product = Product(
-#                 id=product["id"],
-#                 title=product["title"],
-#                 price=product["price"],
-#                 description=product["description"],
-#                 category=product["category"],
-#                 image=product["image"],
-#                 rating_rate=product["rating"]["rate"],
-#                 rating_count=product["rating"]["count"]
-#             )
-#             db.session.merge(db_product)  # Use merge to handle upserts
 
-#         # Commit the changes
-#         db.session.commit()
-#         print("Database populated with products successfully.")
-#     except requests.RequestException as e:
-#         print(f"Error fetching data from API: {e}")
-#     except Exception as e:
-#         print(f"Error populating database: {e}")
+def populate_products():
+    api_url = "https://fakestoreapi.com/products"
+    response = requests.get(api_url)
+    response.raise_for_status()
+    products = response.json()
 
-# class Property(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     address = db.Column(db.String(500), index=True, unique=True)
-#     start_date = db.Column(db.DateTime)
-#     duration = db.Column(db.Integer)
-#     rent = db.Column(db.Float)
+    for product in products:
+        db_product = Product(
+            id=product["id"],
+            title=product["title"],
+            price=product["price"],
+            description=product["description"],
+            category=product["category"],
+            image=product["image"],
+            rating_rate=product["rating"]["rate"],
+            rating_count=product["rating"]["count"]
+        )
+        db.session.merge(db_product)
+
+    db.session.commit()
+    print("Database populated with products successfully.")

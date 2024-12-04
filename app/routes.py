@@ -17,7 +17,6 @@ def index():
     return render_template('store.html', title='Store', products=products)
 
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -30,10 +29,6 @@ def login():
             flash('Invalid username or password')
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
-        next_page = request.args.get('next')
-        if not next_page or urlsplit(next_page).netloc != '':
-            next_page = url_for('index')
-        return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
 
 
@@ -57,63 +52,10 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
 
-@app.route('/add-to-basket', methods=['POST'])
-@login_required
-def add_to_basket():
-    try:
-        # Handle both form submissions and JSON data
 
-        item_id = request.form.get('id')
-
-        if not item_id:
-            flash('Item ID is missing!')
-            return redirect(url_for('index'))
-
-        # Retrieve the product from the database
-        product = db.session.scalar(
-            sa.select(Product).where(Product.id == int(item_id))
-        )
-
-        if not product:
-            flash('Product not found!')
-            return redirect(url_for('index'))
-
-        # Check if the product is already in the user's basket
-        existing_item = db.session.scalar(
-            sa.select(Basket).where(Basket.user_id == current_user.id, Basket.product_id == product.id)
-        )
-
-        if existing_item:
-            # Increment the quantity if the product is already in the basket
-            existing_item.quantity += 1
-        else:
-            # Add a new entry for the product in the basket
-            new_basket_item = Basket(
-                user_id=current_user.id,
-                product_id=product.id,
-                quantity=1
-            )
-            db.session.add(new_basket_item)
-
-        # Commit changes to the database
-        db.session.commit()
-        flash(f'Added {product.title} to your basket.')
-
-        # Different response for JSON requests and form submissions
-        # if request.is_json:
-        #     return jsonify({'message': f'{product.title} added to basket!'}), 200
-        return redirect(url_for('product_detail', product_id=product.id))
-
-    except Exception as e:
-        db.session.rollback()
-        flash('An error occurred while adding the item to the basket.')
-        if request.is_json:
-            return jsonify({'message': str(e)}), 500
-        return redirect(url_for('index'))
 
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):
-    # Fetch the product from the database
     product = db.session.scalar(
         sa.select(Product).where(Product.id == product_id)
     )
@@ -127,18 +69,15 @@ def product_detail(product_id):
 @app.route('/basket')
 @login_required
 def basket():
-    # Retrieve basket items for the current user
     basket_entries = db.session.scalars(
         sa.select(Basket).where(Basket.user_id == current_user.id)
     ).all()
 
-    # Prepare the basket items for the template
     basket_items = []
     total_price = 0
     total_items = 0
 
     for entry in basket_entries:
-        # Retrieve product details for each basket entry
         product = db.session.scalar(
             sa.select(Product).where(Product.id == entry.product_id)
         )
@@ -155,7 +94,6 @@ def basket():
             total_price += product.price * entry.quantity
             total_items += entry.quantity
 
-    # Render the basket page
     return render_template(
         'basket.html',
         basket_items=basket_items,
@@ -163,21 +101,60 @@ def basket():
         total_items=total_items,
     )
 
+@app.route('/add-to-basket', methods=['POST'])
+@login_required
+def add_to_basket():
+    try:
+        item_id = request.form.get('id')
 
+        if not item_id:
+            flash('Item ID is missing!')
+            return redirect(url_for('index'))
+
+        product = db.session.scalar(
+            sa.select(Product).where(Product.id == int(item_id))
+        )
+
+        if not product:
+            flash('Product not found!')
+            return redirect(url_for('index'))
+
+        existing_item = db.session.scalar(
+            sa.select(Basket).where(Basket.user_id == current_user.id, Basket.product_id == product.id)
+        )
+
+        if existing_item:
+            existing_item.quantity += 1
+        else:
+            new_basket_item = Basket(
+                user_id=current_user.id,
+                product_id=product.id,
+                quantity=1
+            )
+            db.session.add(new_basket_item)
+
+        db.session.commit()
+        flash(f'Added {product.title} to your basket.')
+
+        return redirect(url_for('product_detail', product_id=product.id))
+
+    except Exception as e:
+        db.session.rollback()
+        flash('An error occurred while adding the item to the basket.')
+        if request.is_json:
+            return jsonify({'message': str(e)}), 500
+        return redirect(url_for('index'))
 
 @app.route('/remove-from-basket', methods=['POST'])
 @login_required
 def remove_from_basket():
     try:
-        # Parse the incoming JSON request data
         data = request.get_json()
         basket_item_id = data.get('id')
 
-        # Validate the input
         if not basket_item_id:
             return jsonify({'success': False, 'message': 'Basket item ID is missing!'}), 400
 
-        # Fetch the basket item from the database
         basket_item = db.session.scalar(
             sa.select(Basket).where(
                 Basket.id == basket_item_id,
@@ -185,28 +162,63 @@ def remove_from_basket():
             )
         )
 
-        # Check if the basket item exists and belongs to the current user
         if not basket_item:
             return jsonify({'success': False, 'message': 'Basket item not found!'}), 404
 
-        # Remove the basket item
         db.session.delete(basket_item)
         db.session.commit()
 
-        # Return a success response
         return jsonify({'success': True, 'message': 'Item removed from basket.'}), 200
 
     except Exception as e:
-        # Log and return error message
-        app.logger.error(f"Error removing item from basket: {str(e)}")
         return jsonify({'success': False, 'message': 'An error occurred.'}), 500
+
+
+@app.route('/update-basket-quantity', methods=['POST'])
+@login_required
+def update_basket_quantity():
+    try:
+        data = request.get_json()
+        item_id = data.get('item_id')
+        new_quantity = data.get('quantity')
+
+        if not item_id or not new_quantity:
+            return jsonify({'success': False, 'message': 'Item ID or quantity is missing!'}), 400
+
+        new_quantity = int(new_quantity)
+        if new_quantity < 1:
+            return jsonify({'success': False, 'message': 'Quantity must be at least 1.'}), 400
+
+        basket_item = db.session.scalar(
+            sa.select(Basket).where(Basket.id == int(item_id), Basket.user_id == current_user.id)
+        )
+
+        if not basket_item:
+            return jsonify({'success': False, 'message': 'Basket item not found!'}), 404
+
+        basket_item.quantity = new_quantity
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Quantity updated successfully.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.context_processor
+def inject_basket_count():
+    total_items = 0
+    if current_user.is_authenticated:
+        basket_entries = db.session.scalars(
+            sa.select(Basket).where(Basket.user_id == current_user.id)
+        ).all()
+        total_items = sum(entry.quantity for entry in basket_entries)
+    return {'total_items': total_items}
 
 
 @app.route('/checkout', methods=['POST'])
 @login_required
 def checkout():
     try:
-        # Get the user's basket items
         basket_items = db.session.scalars(sa.select(Basket).where(Basket.user_id == current_user.id))
         line_items = []
 
@@ -218,7 +230,7 @@ def checkout():
                     return redirect(url_for('basket'))
                 line_items.append({
                     'price_data': {
-                        'currency': 'usd',
+                        'currency': 'gbp',
                         'product_data': {
                             'name': product.title,
                             'description': product.description,
@@ -232,7 +244,6 @@ def checkout():
             flash("Your basket is empty.")
             return redirect(url_for('basket'))
 
-        # Create Stripe Checkout session
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=line_items,
@@ -257,15 +268,10 @@ def checkout_success():
         return redirect(url_for('index'))
 
     try:
-        # Retrieve the checkout session from Stripe
         session = stripe.checkout.Session.retrieve(session_id)
 
-        # Verify the payment status
         if session.payment_status == 'paid':
-            # Retrieve basket items for the current user
             basket_items = db.session.scalars(sa.select(Basket).where(Basket.user_id == current_user.id)).all()
-
-            # Reduce stock for each item in the basket
             for basket_item in basket_items:
                 product = db.session.scalar(sa.select(Product).where(Product.id == basket_item.product_id))
                 if product:
@@ -275,7 +281,7 @@ def checkout_success():
                         flash(f"Insufficient stock for {product.title}. Could not fulfill the order.")
                         return redirect(url_for('basket'))
 
-            # Clear the user's basket after successfully reducing the stock
+
             db.session.execute(sa.delete(Basket).where(Basket.user_id == current_user.id))
             db.session.commit()
 
@@ -288,45 +294,4 @@ def checkout_success():
         flash(f"An error occurred: {str(e)}")
         return redirect(url_for('basket'))
 
-@app.context_processor
-def inject_basket_count():
-    total_items = 0
-    if current_user.is_authenticated:
-        basket_entries = db.session.scalars(
-            sa.select(Basket).where(Basket.user_id == current_user.id)
-        ).all()
-        total_items = sum(entry.quantity for entry in basket_entries)
-    return {'total_items': total_items}
 
-@app.route('/update-basket-quantity', methods=['POST'])
-@login_required
-def update_basket_quantity():
-    try:
-        data = request.get_json()
-        item_id = data.get('item_id')
-        new_quantity = data.get('quantity')
-
-        if not item_id or not new_quantity:
-            return jsonify({'success': False, 'message': 'Item ID or quantity is missing!'}), 400
-
-        # Validate quantity
-        new_quantity = int(new_quantity)
-        if new_quantity < 1:
-            return jsonify({'success': False, 'message': 'Quantity must be at least 1.'}), 400
-
-        # Retrieve the basket item
-        basket_item = db.session.scalar(
-            sa.select(Basket).where(Basket.id == int(item_id), Basket.user_id == current_user.id)
-        )
-
-        if not basket_item:
-            return jsonify({'success': False, 'message': 'Basket item not found!'}), 404
-
-        # Update the quantity
-        basket_item.quantity = new_quantity
-        db.session.commit()
-
-        return jsonify({'success': True, 'message': 'Quantity updated successfully.'}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500

@@ -4,12 +4,10 @@
 <div class="container">
     <h1 class="text-center my-4">Our Products</h1>
 
-    <!-- Search Bar -->
     <div class="mb-4">
         <input type="text" id="search-bar" class="form-control" placeholder="Search for products...">
     </div>
 
-    <!-- Products Grid -->
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="product-container">
         {% for product in products %}
         <div class="col product-card" data-title="{{ product.title | lower }}" data-category="{{ product.category | lower }}">
@@ -20,7 +18,7 @@
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title text-center">{{ product.title }}</h5>
                     <h6 class="card-subtitle mb-2 text-muted text-center">{{ product.category }}</h6>
-                    <p class="card-text text-center fw-bold">Price: ${{ product.price }}</p>
+                    <p class="card-text text-center fw-bold">Price: £{{ product.price }}</p>
                     <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-primary mt-auto">
                         View Details
                     </a>
@@ -31,26 +29,6 @@
     </div>
 </div>
 
-<!-- Search Script -->
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const searchBar = document.getElementById('search-bar');
-        const productCards = document.querySelectorAll('.product-card');
 
-        searchBar.addEventListener('input', () => {
-            const searchTerm = searchBar.value.toLowerCase();
-
-            productCards.forEach(card => {
-                const title = card.getAttribute('data-title');
-                const category = card.getAttribute('data-category');
-
-                if (title.includes(searchTerm) || category.includes(searchTerm)) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        });
-    });
-</script>
+<script src="{{ url_for('static', filename='js/search.js')}}"></script>
 {% endblock %}
