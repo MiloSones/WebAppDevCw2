@@ -11,7 +11,7 @@
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="product-container">
         {% for product in products %}
         <div class="col product-card" data-title="{{ product.title | lower }}" data-category="{{ product.category | lower }}">
-            <div class="card h-100 shadow-sm">
+            <div class="card hover h-100 shadow-sm">
                 <a href="{{ url_for('product_detail', product_id=product.id) }}">
                     <img src="{{ product.image }}" class="card-img-top img-fluid" alt="Image for {{ product.title }}" style="height: 200px; object-fit: contain;">
                 </a>
