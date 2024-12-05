@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         checkoutButton.disabled = hasStockIssues;
     };
 
-    // Function to update the basket on the server
+
     const updateBasket = (itemId, newQuantity) => {
         return fetch('/update-basket-quantity', {
             method: 'POST',
@@ -47,27 +47,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Attach event listeners to quantity inputs
     quantityInputs.forEach(input => {
         input.addEventListener('input', () => {
             const itemId = input.getAttribute('data-item-id');
             const newQuantity = parseInt(input.value);
 
-            // Validate stock
             validateStock();
 
-            // Update basket if the stock is valid
             const stock = parseInt(input.getAttribute('data-stock'), 10);
             if (newQuantity <= stock) {
                 updateBasket(itemId, newQuantity).then(() => {
-                    // Reload the page to reflect updated totals
                     location.reload();
                 });
             }
         });
     });
 
-    // Initial validation on page load
     validateStock();
 
     const removeButtons = document.querySelectorAll('.remove-item');
