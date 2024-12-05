@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             validateStock();
 
-            const stock = parseInt(input.getAttribute('data-stock'), 10);
+            const stock = parseInt(input.getAttribute('data-stock'));
             if (newQuantity <= stock) {
                 updateBasket(itemId, newQuantity).then(() => {
                     location.reload();
